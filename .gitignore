@@ -1,0 +1,11 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Stray/local tooling artifacts that shouldn't be published
+/A web-based Student Attendance System with QR Code, Geo-Fencing and Network Authentications/
