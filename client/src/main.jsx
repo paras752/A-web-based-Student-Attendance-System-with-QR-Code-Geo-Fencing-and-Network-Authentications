@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './index.css'
+import './styles/theme.css'
 import App from './App.jsx'
 
 // Note: StrictMode is intentionally not used here. Its dev-only double-invoke of effects

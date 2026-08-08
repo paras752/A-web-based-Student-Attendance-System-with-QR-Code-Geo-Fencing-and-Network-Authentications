@@ -1,3 +1,4 @@
+/* Base resets only. All visual styling lives in styles/theme.css (Material 3). */
 :root {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -5,16 +6,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-}
-
 #root {
   min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex: 1 1 auto;
 }

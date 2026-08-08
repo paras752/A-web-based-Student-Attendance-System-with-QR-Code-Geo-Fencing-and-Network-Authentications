@@ -37,6 +37,21 @@ cd ../client
 npm install
 ```
 
+### Changing the schema later
+
+`db:init` is a **factory reset** — `schema.sql` drops every table. It now refuses to run
+against a database that already contains data, and tells you what it would have destroyed.
+To change the schema of a database that is in use, add a file under
+`server/src/db/migrations/` and run:
+
+```bash
+npm run db:migrate    # applies anything pending, records it in schema_migrations
+npm run db:status     # lists applied / pending migrations
+npm run db:check      # read-only integrity report (roles, orphans, retention, hash cost)
+```
+
+A fresh `db:init` and a fully migrated database produce identical schemas.
+
 `npm run db:init` prints three ready-to-use accounts (all share one password):
 
 | Role    | Email                | Password      |
@@ -46,6 +61,41 @@ npm install
 | Student | student@ssas.local    | Password123!  |
 
 A demo course (`CSIT301`) is created and the demo student is already enrolled in it.
+
+**Students can also sign in with their college ID** instead of an email — the seeded student's
+is `23012003`. Staff sign in with their email; only students have a college ID, so the two
+namespaces cannot collide.
+
+### Administrators
+
+An administrator can **never** be self-registered. Every route that creates or promotes one
+requires an existing admin, verified five ways: public register, student, teacher,
+unauthenticated, and role-promotion are all refused.
+
+That leaves the bootstrap — the first admin cannot come from inside the application. Use:
+
+```bash
+npm run admin:create -- --email you@college.edu --name "Your Name"
+```
+
+It prompts for the password rather than taking it on the command line, so it stays out of
+shell history. This path requires shell access to the server, which is already a higher
+privilege than any application role, so it grants nothing an attacker could not otherwise do.
+
+> ⚠️ `db:init` seeds `admin@ssas.local` with the password printed below — **published in this
+> file**. Fine for local development; a live deployment left on it is the most likely way this
+> system gets taken over. `npm run db:check` warns whenever any account still uses it.
+
+### Accounts are issued, not signed up for
+
+Public self-registration is **closed by default** (`ALLOW_PUBLIC_REGISTRATION=false`). Attendance
+records are keyed to the institutional student number, so an account the college did not issue
+corresponds to nobody on any roster. Accounts are created by an admin — individually from
+**Users → Add user**, or in bulk by pasting spreadsheet columns into **Users → Import students**.
+Set `ALLOW_PUBLIC_REGISTRATION=true` to reopen the sign-up form for a standalone demo.
+
+Enrolment is likewise **not self-service**: it decides who appears in the official attendance
+report, so it belongs to an admin or the course's own teacher (**Courses → Roster**).
 
 ## Running it
 
@@ -69,12 +119,35 @@ Open **http://localhost:5173**. Log in as any of the seeded accounts above.
    location" to set the geofence centre to wherever you actually are (useful for testing on a
    phone/laptop with location on) — otherwise type any lat/lng. Leave the subnet as `any` for local
    testing (see note below).
-2. On the **Live Session** screen the QR code refreshes every 30 seconds.
+2. On the **Live Session** screen the QR code replaces itself on the schedule you chose when
+   creating the session (**Code expires after**, 10–300 seconds, default 30), with a countdown
+   showing how long the current code has left.
 3. On a phone (or a second browser tab logged in as **student**), open **Scan attendance QR**,
    scan the code, and allow the location permission prompt. You should see either a success
    message or a specific rejection reason (expired QR, out of geofence, wrong network, duplicate).
-4. Back on the teacher's Live Session screen, the roster updates automatically.
-5. Try **Reports** on the teacher dashboard for a PDF/Excel export of a date range.
+4. Back on the teacher's Live Session screen, the roster updates automatically. **Failed
+   attempts are shown too**, grouped by reason — so an empty roster tells you *why* nobody is
+   checking in rather than leaving you guessing.
+5. If a student genuinely cannot scan (Wi-Fi down, flat battery), use **Mark present** beside
+   their name. This is recorded as a manual mark in your name with an optional reason, stored
+   with all three check flags set to `0`, and is shown as `MANUAL` everywhere — including on
+   reports. It never masquerades as a verified scan. The register can still be corrected after
+   the session has ended.
+6. Try **Reports** on the teacher dashboard for a PDF/Excel export of a date range; the export
+   distinguishes verified scans from manual marks.
+
+### Testing from a phone
+
+`npm run dev` binds to localhost only, and `getUserMedia` (the QR scanner) plus geolocation are
+both gated behind a **secure context** — a plain `http://192.168.x.x` origin is not one, so the
+camera silently refuses to start. Use:
+
+```bash
+cd client && npm run dev:lan     # serves over HTTPS on the machine's LAN address
+```
+
+Then open `https://<your-lan-ip>:5173` on the phone and accept the self-signed certificate
+warning (**Advanced → Proceed**). The port may also need an inbound firewall rule.
 
 ### About the network-authentication check
 
@@ -88,11 +161,20 @@ authorised subnet**, which is what this build does. When creating a session:
   check against).
 - On a real deployment, set it to the institution's actual Wi-Fi subnet in CIDR form, e.g.
   `192.168.1.0/24`.
-- Requests from `localhost`/`127.0.0.1` are always treated as authorised, so the system stays
-  testable without a real network to point it at.
+- Loopback (`::1`/`127.0.0.1`) is **not** silently authorised. It used to be, which quietly
+  disabled the third factor for anything reaching the server locally — and inconsistently, since
+  `::1` passed while `127.0.0.1` did not. Local testing is served by the `any` subnet instead.
+  Set `NETWORK_TRUST_LOOPBACK=true` to opt back in.
 
 The **SSID** field on a session is kept only as a human-readable label for the teacher — it is
 not used as an automated check, for the reason above.
+
+> This was true of the design but **not** of the code until recently: `verifyNetwork` checked the
+> submitted SSID *first* and returned pass on a match, before the IP was ever examined. Since a
+> browser cannot read an SSID, that value could only have come from the request body — so anyone
+> who knew the campus network's name (public information) could send `{"ssid":"Campus_WiFi"}`
+> from anywhere on the internet and satisfy the network factor outright. The SSID is now ignored
+> entirely; only the connection's source IP is used, which the client cannot choose.
 
 ## Known trade-offs (by design, not oversights)
 
@@ -115,11 +197,37 @@ server/   Express API — see src/services for the QR/geofence/network/attendanc
 client/   React SPA — src/pages/{student,teacher,admin} split by role
 ```
 
+## Auditability
+
+Only the check-ins that *succeeded* used to be stored, so a failure left no trace: a student
+insisting they had tried had nothing to point at, and a teacher facing an empty roster could not
+tell "nobody scanned" from "everyone scanned and the network refused them".
+
+Every attempt is now recorded in `attendance_attempts` — including successes — with which of the
+three checks passed, failed, or was **skipped**. Skipped is meaningful: the checks short-circuit
+in order, so a geofence failure means the network check never ran, and recording it as `failed`
+would blame infrastructure that was never consulted. Failures are surfaced per session to the
+teacher and institution-wide to administration. Kept in a separate table from
+`attendance_records` on purpose: reports read the existence of an attendance record as PRESENT,
+so storing failures there would make every failed attempt count as attendance.
+
+Manual marks are equally distinguishable — `marked_by` names the teacher, `mark_reason` records
+why, and the three check flags are stored as `0`. Administration sees the manual share of the
+whole record as a trust signal.
+
 ## Security notes for graders / reviewers
 
-- Passwords: bcrypt, 12 rounds.
+- Passwords: bcrypt, 12 rounds — asserted by `npm run db:check`, because the seed script had
+  drifted to cost 10 while the application used 12.
 - Tokens: JWT HS256, 15-minute access / 7-day refresh, refresh tokens hashed at rest and
-  revoked on logout/rotation.
+  revoked on logout/rotation. Rotation allows a **30-second reuse grace window**
+  (`REFRESH_ROTATION_GRACE_MS`): the live-session screen polls every few seconds, so a poll's
+  refresh could rotate the cookie at the instant the next page booted with the value it had just
+  read, and the loser was logged out mid-lesson for doing nothing wrong. A token replayed long
+  after rotation is still refused — that is the case worth treating as theft.
+- Login accepts an email **or** a student number. An unknown identifier is compared against a
+  dummy hash so a miss costs the same ~100 ms as a hit; returning early would have made response
+  time an account-enumeration oracle and undone the identical `Invalid credentials` message.
 - `trust proxy` is left disabled by default (`TRUST_PROXY_HOPS=0`) — enabling it blindly would
   let a client spoof `X-Forwarded-For` and defeat both rate limiting and the network-auth subnet
   check; only set it if this is deployed behind a real, counted reverse-proxy chain.

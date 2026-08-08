@@ -8,7 +8,11 @@ export default function ProtectedRoute({ roles, children }) {
   const location = useLocation();
 
   if (initializing) {
-    return <div className="text-center py-5 text-muted">Loading…</div>;
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100svh' }}>
+        <div className="md-spinner" role="status" aria-label="Loading" />
+      </div>
+    );
   }
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;

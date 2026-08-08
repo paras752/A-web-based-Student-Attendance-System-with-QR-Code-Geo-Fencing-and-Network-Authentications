@@ -25,11 +25,40 @@ const create = asyncHandler(async (req, res) => {
   res.status(201).json({ course });
 });
 
+// A teacher may only manage the roster of a course they own; an admin may manage any. The
+// student's own id is never used here - the route guard keeps students out entirely, so
+// there is no path by which a caller enrols themselves.
+async function assertMayManageRoster(user, courseId) {
+  if (user.role === 'teacher') {
+    await courseService.assertTeacherOwnsCourse(courseId, user.id);
+  }
+}
+
 const enrol = asyncHandler(async (req, res) => {
   const courseId = Number(req.params.id);
-  const studentId = req.user.role === 'student' ? req.user.id : req.body.studentId;
-  const result = await courseService.enrolStudent({ courseId, studentId });
+  await assertMayManageRoster(req.user, courseId);
+  const result = await courseService.enrolStudent({
+    courseId,
+    studentId: Number(req.body.studentId),
+  });
   res.status(201).json({ enrolment: result });
+});
+
+const unenrol = asyncHandler(async (req, res) => {
+  const courseId = Number(req.params.id);
+  await assertMayManageRoster(req.user, courseId);
+  await courseService.unenrolStudent({ courseId, studentId: Number(req.params.studentId) });
+  res.status(204).send();
+});
+
+const roster = asyncHandler(async (req, res) => {
+  const courseId = Number(req.params.id);
+  await assertMayManageRoster(req.user, courseId);
+  const [enrolled, enrollable] = await Promise.all([
+    courseService.listRoster(courseId),
+    courseService.listEnrollableStudents(courseId),
+  ]);
+  res.json({ enrolled, enrollable });
 });
 
 const listSessions = asyncHandler(async (req, res) => {
@@ -38,4 +67,4 @@ const listSessions = asyncHandler(async (req, res) => {
   res.json({ sessions });
 });
 
-module.exports = { list, listAll, create, enrol, listSessions };
+module.exports = { list, listAll, create, enrol, unenrol, roster, listSessions };

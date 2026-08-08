@@ -1,4 +1,4 @@
-# OS junk
+﻿# OS junk
 .DS_Store
 Thumbs.db
 
@@ -9,3 +9,10 @@ Thumbs.db
 
 # Stray/local tooling artifacts that shouldn't be published
 /A web-based Student Attendance System with QR Code, Geo-Fencing and Network Authentications/
+
+# Local agent/editor permission settings - machine-specific, not project code
+.setting/
+.claude/settings.local.json
+
+# Scratch output from local browser checks
+.tmp-playwright-check/

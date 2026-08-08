@@ -6,15 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SSAS — Smart Student Attendance System</title>
     <script>
-      // Set before first paint so Bootstrap 5.3's built-in dark theme (navbar,
-      // cards, tables, forms) matches the OS scheme with no flash of the wrong theme.
+      // Runs before first paint so the saved theme is applied with no flash of the
+      // wrong one. React's ThemeProvider takes over once mounted and keeps using
+      // this same storage key, so the two never disagree.
       (function () {
-        var media = window.matchMedia('(prefers-color-scheme: dark)');
-        var apply = function () {
-          document.documentElement.setAttribute('data-bs-theme', media.matches ? 'dark' : 'light');
-        };
-        apply();
-        media.addEventListener('change', apply);
+        var theme;
+        try {
+          var stored = localStorage.getItem('ssas-theme');
+          theme = stored === 'light' || stored === 'dark' ? stored : null;
+        } catch (e) {
+          theme = null;
+        }
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
       })();
     </script>
   </head>

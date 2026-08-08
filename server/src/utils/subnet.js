@@ -4,6 +4,17 @@
 // the institution's authorised subnet? The session's `authorised_ssid` field is kept only
 // as a human-readable label for the teacher; it is not used as an automated signal.
 
+// Loopback used to be treated as authorised unconditionally, which had two problems: it
+// silently disabled the third verification factor for anything reaching the server locally,
+// and it was inconsistent - '::1' passed while '127.0.0.1' did not, so the same machine
+// could pass or fail depending on which stack the connection arrived over. Dev convenience
+// is served by the 'any' subnet (the default for both CAMPUS_SUBNET and new sessions), so
+// this is now opt-in and off by default.
+const TRUST_LOOPBACK =
+  String(process.env.NETWORK_TRUST_LOOPBACK || 'false').toLowerCase() === 'true';
+
+const LOOPBACK = new Set(['::1', '127.0.0.1', 'localhost']);
+
 function normaliseIp(ip) {
   if (!ip) return ip;
   // Express/Node report IPv4-over-IPv6 connections as e.g. "::ffff:127.0.0.1"
@@ -26,9 +37,7 @@ function isIpInSubnet(ip, subnet) {
   if (subnet.trim().toLowerCase() === 'any') return true;
 
   const cleanIp = normaliseIp(ip);
-  if (cleanIp === '::1' || cleanIp === 'localhost') {
-    // Loopback dev requests are treated as being on the authorised network so the
-    // system is testable without deploying to real campus Wi-Fi.
+  if (TRUST_LOOPBACK && LOOPBACK.has(cleanIp)) {
     return true;
   }
 

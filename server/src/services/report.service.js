@@ -12,9 +12,15 @@ async function generateAttendanceReport({ courseId, dateRangeStart, dateRangeEnd
     throw new ApiError(403, 'You do not own this course');
   }
 
+  // The range bounds arrive as date-only strings ("2026-08-05"), which MySQL widens to
+  // midnight. A plain BETWEEN would therefore drop every session that starts later in the
+  // day on dateRangeEnd - so a report run "up to today" silently omits today's classes.
+  // Comparing against the start of the following day keeps the end date inclusive.
   const [sessions] = await pool.query(
     `SELECT id, start_time, end_time FROM sessions
-     WHERE course_id = ? AND start_time BETWEEN ? AND ?
+     WHERE course_id = ?
+       AND start_time >= ?
+       AND start_time < DATE_ADD(?, INTERVAL 1 DAY)
      ORDER BY start_time`,
     [courseId, dateRangeStart, dateRangeEnd]
   );
@@ -30,24 +36,29 @@ async function generateAttendanceReport({ courseId, dateRangeStart, dateRangeEnd
   );
 
   const [records] = await pool.query(
-    `SELECT session_id, student_id, submitted_at
+    `SELECT session_id, student_id, submitted_at, marked_by, mark_reason
      FROM attendance_records
      WHERE session_id IN (${sessions.map(() => '?').join(',') || 'NULL'})`,
     sessions.map((s) => s.id)
   );
-  const presentSet = new Set(records.map((r) => `${r.session_id}:${r.student_id}`));
+  // Keeping the whole record, not just presence: a report that collapses a teacher's manual
+  // override and a verified three-factor scan into the same word "PRESENT" throws away the
+  // one distinction anybody auditing this system would ask about.
+  const recordMap = new Map(records.map((r) => [`${r.session_id}:${r.student_id}`, r]));
 
   const detail = [];
   for (const session of sessions) {
     for (const student of enrolled) {
-      const present = presentSet.has(`${session.id}:${student.student_id}`);
+      const record = recordMap.get(`${session.id}:${student.student_id}`);
       detail.push({
         sessionId: session.id,
         sessionDate: session.start_time,
         studentId: student.student_id,
         studentName: student.name,
         studentNumber: student.student_number,
-        status: present ? 'PRESENT' : 'ABSENT',
+        status: record ? 'PRESENT' : 'ABSENT',
+        method: record ? (record.marked_by ? 'MANUAL' : 'VERIFIED') : null,
+        markReason: record?.mark_reason || null,
       });
     }
   }
@@ -59,12 +70,17 @@ async function generateAttendanceReport({ courseId, dateRangeStart, dateRangeEnd
       studentName: student.name,
       studentNumber: student.student_number,
       presentCount: 0,
+      manualCount: 0,
       totalSessions: sessions.length,
     });
   }
   for (const row of detail) {
     if (row.status === 'PRESENT') {
-      summaryMap.get(row.studentId).presentCount += 1;
+      const s = summaryMap.get(row.studentId);
+      s.presentCount += 1;
+      // Surfaced separately so a student whose attendance is largely teacher-marked is
+      // visible as such rather than reading identically to one who scanned every time.
+      if (row.method === 'MANUAL') s.manualCount += 1;
     }
   }
   const summary = [...summaryMap.values()].map((s) => ({
@@ -92,7 +108,9 @@ async function renderReportAsPdf(report) {
     doc
       .fontSize(10)
       .text(
-        `${row.studentNumber}  ${row.studentName}  -  ${row.presentCount}/${row.totalSessions} (${row.attendancePercentage}%)`
+        `${row.studentNumber}  ${row.studentName}  -  ${row.presentCount}/${row.totalSessions} ` +
+          `(${row.attendancePercentage}%)` +
+          (row.manualCount > 0 ? `  [${row.manualCount} marked manually]` : '')
       );
   });
 
@@ -107,6 +125,7 @@ async function renderReportAsXlsx(report) {
     { header: 'Student Number', key: 'studentNumber', width: 18 },
     { header: 'Student Name', key: 'studentName', width: 28 },
     { header: 'Present', key: 'presentCount', width: 10 },
+    { header: 'Of which manual', key: 'manualCount', width: 16 },
     { header: 'Total Sessions', key: 'totalSessions', width: 14 },
     { header: 'Attendance %', key: 'attendancePercentage', width: 14 },
   ];
@@ -118,6 +137,8 @@ async function renderReportAsXlsx(report) {
     { header: 'Student Number', key: 'studentNumber', width: 18 },
     { header: 'Student Name', key: 'studentName', width: 28 },
     { header: 'Status', key: 'status', width: 10 },
+    { header: 'Method', key: 'method', width: 12 },
+    { header: 'Reason', key: 'markReason', width: 32 },
   ];
   detailSheet.addRows(report.detail);
 

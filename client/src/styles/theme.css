@@ -1,0 +1,923 @@
+/* ============================================================================
+   Material 3 design system for SSAS.
+
+   Colour roles follow the M3 spec (primary / secondary / tertiary, each with a
+   "container" pair, plus a surface-container elevation ramp). The palette is
+   generated from the project's existing navy-blue brand seed so the app still
+   looks like SSAS, just expressed in M3's tonal language.
+
+   Both schemes are declared as custom properties and swapped by [data-theme] on
+   <html>, so every component is written once and themes for free.
+   ========================================================================== */
+
+:root,
+[data-theme='light'] {
+  --md-primary: #26638a;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #c9e6ff;
+  --md-on-primary-container: #001e30;
+
+  --md-secondary: #4f616e;
+  --md-on-secondary: #ffffff;
+  --md-secondary-container: #d2e5f5;
+  --md-on-secondary-container: #0b1d29;
+
+  --md-tertiary: #63597c;
+  --md-on-tertiary: #ffffff;
+  --md-tertiary-container: #e9ddff;
+  --md-on-tertiary-container: #1f1635;
+
+  --md-error: #ba1a1a;
+  --md-on-error: #ffffff;
+  --md-error-container: #ffdad6;
+  --md-on-error-container: #410002;
+
+  --md-success: #146c2e;
+  --md-on-success: #ffffff;
+  --md-success-container: #a6f4a6;
+  --md-on-success-container: #00210a;
+
+  --md-warning: #7a5900;
+  --md-on-warning: #ffffff;
+  --md-warning-container: #ffdf9a;
+  --md-on-warning-container: #261a00;
+
+  --md-background: #f7f9ff;
+  --md-on-background: #181c20;
+  --md-surface: #f7f9ff;
+  --md-on-surface: #181c20;
+  --md-surface-variant: #dde3ea;
+  --md-on-surface-variant: #41474d;
+
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #f1f4f9;
+  --md-surface-container: #ebeef3;
+  --md-surface-container-high: #e6e8ee;
+  --md-surface-container-highest: #e0e2e8;
+
+  --md-outline: #72787e;
+  --md-outline-variant: #c1c7ce;
+
+  --md-inverse-surface: #2d3135;
+  --md-inverse-on-surface: #eef1f6;
+  --md-scrim: 0 0 0;
+
+  --md-shadow-rgb: 0 0 0;
+  --md-state-rgb: 26 28 30;
+}
+
+[data-theme='dark'] {
+  --md-primary: #94ccf8;
+  --md-on-primary: #00344f;
+  --md-primary-container: #004b70;
+  --md-on-primary-container: #c9e6ff;
+
+  --md-secondary: #b6c9d8;
+  --md-on-secondary: #21323e;
+  --md-secondary-container: #374955;
+  --md-on-secondary-container: #d2e5f5;
+
+  --md-tertiary: #cdc0e9;
+  --md-on-tertiary: #342b4b;
+  --md-tertiary-container: #4b4163;
+  --md-on-tertiary-container: #e9ddff;
+
+  --md-error: #ffb4ab;
+  --md-on-error: #690005;
+  --md-error-container: #93000a;
+  --md-on-error-container: #ffdad6;
+
+  --md-success: #8bd88f;
+  --md-on-success: #003912;
+  --md-success-container: #005321;
+  --md-on-success-container: #a6f4a6;
+
+  --md-warning: #f0c04a;
+  --md-on-warning: #402d00;
+  --md-warning-container: #5c4200;
+  --md-on-warning-container: #ffdf9a;
+
+  --md-background: #101418;
+  --md-on-background: #e0e2e8;
+  --md-surface: #101418;
+  --md-on-surface: #e0e2e8;
+  --md-surface-variant: #41474d;
+  --md-on-surface-variant: #c1c7ce;
+
+  --md-surface-container-lowest: #0b0f12;
+  --md-surface-container-low: #181c20;
+  --md-surface-container: #1c2024;
+  --md-surface-container-high: #272a2f;
+  --md-surface-container-highest: #32353a;
+
+  --md-outline: #8b9198;
+  --md-outline-variant: #41474d;
+
+  --md-inverse-surface: #e0e2e8;
+  --md-inverse-on-surface: #2d3135;
+  --md-scrim: 0 0 0;
+
+  --md-shadow-rgb: 0 0 0;
+  --md-state-rgb: 224 226 232;
+}
+
+:root {
+  /* Shape scale */
+  --md-shape-xs: 4px;
+  --md-shape-sm: 8px;
+  --md-shape-md: 12px;
+  --md-shape-lg: 16px;
+  --md-shape-xl: 28px;
+  --md-shape-full: 9999px;
+
+  /* Elevation */
+  --md-elev-1: 0 1px 2px rgb(var(--md-shadow-rgb) / 0.3), 0 1px 3px 1px rgb(var(--md-shadow-rgb) / 0.15);
+  --md-elev-2: 0 1px 2px rgb(var(--md-shadow-rgb) / 0.3), 0 2px 6px 2px rgb(var(--md-shadow-rgb) / 0.15);
+  --md-elev-3: 0 1px 3px rgb(var(--md-shadow-rgb) / 0.3), 0 4px 8px 3px rgb(var(--md-shadow-rgb) / 0.15);
+
+  /* Motion */
+  --md-ease: cubic-bezier(0.2, 0, 0, 1);
+  --md-dur: 200ms;
+
+  --md-rail-width: 88px;
+  --md-topbar-height: 64px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------- base --- */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--md-background);
+  color: var(--md-on-background);
+  font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--md-dur) var(--md-ease), color var(--md-dur) var(--md-ease);
+}
+
+/* ------------------------------------------------------ type scale (M3) --- */
+
+.md-display-small { font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: 0; }
+.md-headline-large { font-size: 32px; line-height: 40px; font-weight: 400; }
+.md-headline-medium { font-size: 28px; line-height: 36px; font-weight: 400; }
+.md-headline-small { font-size: 24px; line-height: 32px; font-weight: 400; }
+.md-title-large { font-size: 22px; line-height: 28px; font-weight: 400; }
+.md-title-medium { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0.15px; }
+.md-title-small { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.md-body-large { font-size: 16px; line-height: 24px; font-weight: 400; letter-spacing: 0.5px; }
+.md-body-medium { font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0.25px; }
+.md-body-small { font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: 0.4px; }
+.md-label-large { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.md-label-medium { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+.md-label-small { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+
+.md-on-surface { color: var(--md-on-surface); }
+.md-on-surface-variant { color: var(--md-on-surface-variant); }
+.md-primary-text { color: var(--md-primary); }
+
+/* --------------------------------------------------------- state layer --- */
+/* M3 signals interactivity with a translucent overlay of the *content* colour
+   rather than by changing the container colour outright. */
+
+.md-state {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.md-state::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-dur) var(--md-ease);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.md-state:hover::after { opacity: 0.08; }
+.md-state:focus-visible::after { opacity: 0.1; }
+.md-state:active::after { opacity: 0.12; }
+
+/* ------------------------------------------------------------- buttons --- */
+
+.md-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--md-shape-full);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: box-shadow var(--md-dur) var(--md-ease), background-color var(--md-dur) var(--md-ease);
+  white-space: nowrap;
+}
+
+.md-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-dur) var(--md-ease);
+  pointer-events: none;
+}
+
+.md-btn:hover::after { opacity: 0.08; }
+.md-btn:focus-visible::after { opacity: 0.1; }
+.md-btn:active::after { opacity: 0.12; }
+
+.md-btn:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.md-btn:disabled,
+.md-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  background: rgb(var(--md-state-rgb) / 0.12) !important;
+  color: rgb(var(--md-state-rgb) / 0.38) !important;
+  box-shadow: none !important;
+}
+
+.md-btn:disabled::after { opacity: 0; }
+
+.md-btn-filled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.md-btn-tonal {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.md-btn-elevated {
+  background: var(--md-surface-container-low);
+  color: var(--md-primary);
+  box-shadow: var(--md-elev-1);
+}
+
+.md-btn-outlined {
+  background: transparent;
+  color: var(--md-primary);
+  border: 1px solid var(--md-outline);
+}
+
+.md-btn-text {
+  background: transparent;
+  color: var(--md-primary);
+  padding: 0 12px;
+}
+
+.md-btn-danger {
+  background: var(--md-error);
+  color: var(--md-on-error);
+}
+
+.md-btn-danger-outlined {
+  background: transparent;
+  color: var(--md-error);
+  border: 1px solid var(--md-error);
+}
+
+.md-btn-sm {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+.md-btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* Icon-only button */
+.md-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--md-shape-full);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color var(--md-dur) var(--md-ease);
+}
+
+.md-icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-dur) var(--md-ease);
+}
+
+.md-icon-btn:hover::after { opacity: 0.08; }
+.md-icon-btn:active::after { opacity: 0.12; }
+
+/* --------------------------------------------------------------- cards --- */
+
+.md-card {
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  transition: background-color var(--md-dur) var(--md-ease), box-shadow var(--md-dur) var(--md-ease);
+}
+
+.md-card-elevated {
+  background: var(--md-surface-container-low);
+  box-shadow: var(--md-elev-1);
+}
+
+.md-card-filled {
+  background: var(--md-surface-container-highest);
+}
+
+.md-card-outlined {
+  background: var(--md-surface);
+  border: 1px solid var(--md-outline-variant);
+}
+
+.md-card-primary {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.md-card-pad { padding: 24px; }
+
+/* --------------------------------------------------------- text fields --- */
+
+.md-field { margin-bottom: 20px; }
+
+.md-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--md-on-surface-variant);
+}
+
+.md-input {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid var(--md-outline);
+  border-radius: var(--md-shape-xs);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-size: 16px;
+  font-family: inherit;
+  transition: border-color var(--md-dur) var(--md-ease), box-shadow var(--md-dur) var(--md-ease);
+}
+
+textarea.md-input { height: auto; padding: 16px; }
+
+.md-input::placeholder { color: var(--md-on-surface-variant); opacity: 0.7; }
+
+.md-input:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  box-shadow: inset 0 0 0 1px var(--md-primary);
+}
+
+.md-input:disabled {
+  background: rgb(var(--md-state-rgb) / 0.04);
+  color: rgb(var(--md-state-rgb) / 0.38);
+  border-color: rgb(var(--md-state-rgb) / 0.12);
+  cursor: not-allowed;
+}
+
+select.md-input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) 24px, calc(100% - 14px) 24px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+
+.md-input-with-icon { position: relative; }
+.md-input-with-icon .md-input { padding-left: 48px; }
+.md-input-with-icon > .md-field-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--md-on-surface-variant);
+  pointer-events: none;
+  display: flex;
+}
+.md-input-with-icon > .md-field-trailing {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.md-supporting {
+  display: block;
+  margin-top: 4px;
+  padding: 0 16px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--md-on-surface-variant);
+}
+
+.md-supporting-error { color: var(--md-error); }
+
+/* --------------------------------------------------------------- chips --- */
+
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  border: 1px solid var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.md-chip-selected {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+  border-color: transparent;
+}
+
+/* Status pills (badges) */
+.md-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--md-shape-sm);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.md-badge-success { background: var(--md-success-container); color: var(--md-on-success-container); }
+.md-badge-error { background: var(--md-error-container); color: var(--md-on-error-container); }
+.md-badge-warning { background: var(--md-warning-container); color: var(--md-on-warning-container); }
+.md-badge-neutral { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+.md-badge-primary { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.md-badge-tertiary { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
+
+.md-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------- banners --- */
+
+.md-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--md-shape-md);
+  font-size: 14px;
+  line-height: 20px;
+  margin-bottom: 16px;
+}
+
+.md-banner-error { background: var(--md-error-container); color: var(--md-on-error-container); }
+.md-banner-success { background: var(--md-success-container); color: var(--md-on-success-container); }
+.md-banner-info { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.md-banner-warning { background: var(--md-warning-container); color: var(--md-on-warning-container); }
+
+/* --------------------------------------------------- navigation & shell --- */
+
+.md-shell {
+  display: flex;
+  min-height: 100svh;
+  background: var(--md-background);
+}
+
+/* M3 navigation rail */
+.md-rail {
+  width: var(--md-rail-width);
+  flex-shrink: 0;
+  background: var(--md-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0 16px;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  gap: 4px;
+}
+
+.md-rail-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.md-rail-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.md-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* The pill "active indicator" is the signature M3 rail affordance: the label
+   stays put and only the icon's container is highlighted. */
+.md-rail-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+  transition: background-color var(--md-dur) var(--md-ease);
+}
+
+.md-rail-indicator::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-dur) var(--md-ease);
+}
+
+.md-rail-item:hover .md-rail-indicator::after { opacity: 0.08; }
+.md-rail-item:active .md-rail-indicator::after { opacity: 0.12; }
+
+.md-rail-item.active {
+  color: var(--md-on-surface);
+}
+
+.md-rail-item.active .md-rail-indicator {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.md-rail-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.md-rail-item.active .md-rail-label { font-weight: 700; }
+
+.md-rail-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+/* Top app bar */
+.md-topbar {
+  height: var(--md-topbar-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px 0 8px;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  transition: background-color var(--md-dur) var(--md-ease), box-shadow var(--md-dur) var(--md-ease);
+}
+
+/* M3 raises the bar to a container tone once content scrolls under it. */
+.md-topbar.scrolled {
+  background: var(--md-surface-container);
+  box-shadow: var(--md-elev-1);
+}
+
+.md-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-content {
+  flex: 1 1 auto;
+  padding: 24px;
+  max-width: 1400px;
+  width: 100%;
+}
+
+.md-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-tertiary-container);
+  color: var(--md-on-tertiary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------- table --- */
+
+.md-table-wrap {
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-low);
+  overflow: hidden;
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.md-table thead th {
+  padding: 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+  background: var(--md-surface-container);
+  white-space: nowrap;
+}
+
+.md-table tbody td {
+  padding: 16px;
+  border-top: 1px solid var(--md-outline-variant);
+  color: var(--md-on-surface);
+  vertical-align: middle;
+}
+
+.md-table tbody tr {
+  transition: background-color var(--md-dur) var(--md-ease);
+}
+
+.md-table tbody tr:hover {
+  background: rgb(var(--md-state-rgb) / 0.04);
+}
+
+.md-table-empty {
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  padding: 32px 16px !important;
+}
+
+/* ------------------------------------------------------------ progress --- */
+
+.md-progress {
+  height: 4px;
+  border-radius: var(--md-shape-full);
+  background: var(--md-surface-container-highest);
+  overflow: hidden;
+}
+
+.md-progress-bar {
+  height: 100%;
+  border-radius: var(--md-shape-full);
+  background: var(--md-primary);
+  transition: width 400ms var(--md-ease);
+}
+
+.md-progress-lg { height: 10px; }
+
+/* A percentage only means something against the number it has to clear, so the track can
+   carry the pass mark itself rather than leaving the reader to do the comparison. */
+.md-progress-marked { position: relative; overflow: visible; }
+
+.md-progress-marked > .md-progress-bar { position: relative; z-index: 0; }
+
+.md-progress-threshold {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--md-on-surface);
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.md-progress-bar-success { background: var(--md-success); }
+.md-progress-bar-warning { background: var(--md-warning); }
+.md-progress-bar-error { background: var(--md-error); }
+
+.md-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--md-surface-container-highest);
+  border-top-color: var(--md-primary);
+  border-radius: 50%;
+  animation: md-spin 900ms linear infinite;
+}
+
+@keyframes md-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* -------------------------------------------------------------- switch --- */
+
+.md-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--md-shape-full);
+  background: var(--md-surface-container-highest);
+  border: 2px solid var(--md-outline);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--md-dur) var(--md-ease), border-color var(--md-dur) var(--md-ease);
+}
+
+.md-switch[aria-checked='true'] {
+  background: var(--md-primary);
+  border-color: var(--md-primary);
+}
+
+.md-switch-thumb {
+  position: absolute;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--md-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-on-primary);
+  transition: transform var(--md-dur) var(--md-ease), width var(--md-dur) var(--md-ease),
+    height var(--md-dur) var(--md-ease), background-color var(--md-dur) var(--md-ease), left var(--md-dur) var(--md-ease);
+}
+
+.md-switch[aria-checked='true'] .md-switch-thumb {
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: var(--md-on-primary);
+  color: var(--md-primary);
+  transform: translateX(20px);
+}
+
+/* --------------------------------------------------------------- utils --- */
+
+.md-divider {
+  height: 1px;
+  background: var(--md-outline-variant);
+  border: none;
+  margin: 16px 0;
+}
+
+.md-link {
+  color: var(--md-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.md-link:hover { text-decoration: underline; color: var(--md-primary); }
+
+.md-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Medium widths (tablets): keep the rail, just narrow it. */
+@media (max-width: 900px) {
+  :root { --md-rail-width: 72px; }
+  .md-content { padding: 16px; }
+  .md-card-pad { padding: 16px; }
+}
+
+/* Compact widths (phones): a vertical rail costs ~23% of a 390px screen for navigation the
+   thumb cannot comfortably reach anyway. M3 replaces it with a bottom navigation bar below
+   600dp, which is also where the thumb already is - and this app is meant to be used on a
+   phone, standing in a classroom, with about 30 seconds of QR validity. */
+@media (max-width: 600px) {
+  .md-shell { flex-direction: column; }
+
+  .md-rail {
+    position: fixed;
+    /* The rail is `top: 0` when it is a sticky sidebar. That declaration has to be undone
+       explicitly - leaving it set alongside `bottom: 0` pins both edges, and the bar
+       stretches to the full viewport height no matter what `height` says. */
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: stretch;
+    padding: 8px 4px;
+    gap: 0;
+    background: var(--md-surface-container);
+    box-shadow: var(--md-elev-2);
+    z-index: 30;
+    /* Clears the iOS home indicator / Android gesture bar. */
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .md-rail-logo { display: none; }
+
+  .md-rail-items {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
+    flex: 1 1 auto;
+  }
+
+  .md-rail-item {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .md-rail-indicator { width: 64px; height: 32px; }
+
+  .md-rail-label {
+    font-size: 11px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Content must clear the fixed bar, or the last row of every page sits under it. */
+  .md-content { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+
+  .md-topbar { padding-right: 8px; }
+}

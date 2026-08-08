@@ -39,8 +39,9 @@ export function AuthProvider({ children }) {
     };
   }, [clearSession]);
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+  // `identifier` is an email or a college-issued student number; the server resolves either.
+  const login = useCallback(async (identifier, password) => {
+    const { data } = await api.post('/auth/login', { identifier, password });
     setAccessToken(data.accessToken);
     setUser(data.user);
     return data.user;
@@ -59,9 +60,16 @@ export function AuthProvider({ children }) {
     }
   }, [clearSession]);
 
+  // No updateProfile here on purpose. Name, email and academic details are institutional
+  // records corrected by an admin, not preferences a signed-in user can edit; the password
+  // is the one thing they genuinely own.
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    await api.post('/auth/me/password', { currentPassword, newPassword });
+  }, []);
+
   const value = useMemo(
-    () => ({ user, initializing, login, register, logout }),
-    [user, initializing, login, register, logout]
+    () => ({ user, initializing, login, register, logout, changePassword }),
+    [user, initializing, login, register, logout, changePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
