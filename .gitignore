@@ -1,4 +1,4 @@
-﻿# OS junk
+# OS junk
 .DS_Store
 Thumbs.db
 
@@ -16,3 +16,6 @@ Thumbs.db
 
 # Scratch output from local browser checks
 .tmp-playwright-check/
+
+# Generated Word build of the report - regenerate from docs/CAPSTONE-2-REPORT.md
+*.docx
