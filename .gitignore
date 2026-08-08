@@ -19,3 +19,6 @@ Thumbs.db
 
 # Generated Word build of the report - regenerate from docs/CAPSTONE-2-REPORT.md
 *.docx
+
+# Capstone 2 report - coursework, kept locally rather than in the code repo
+docs/CAPSTONE-2-REPORT.md
