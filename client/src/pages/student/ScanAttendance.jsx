@@ -20,8 +20,12 @@ const FAILURE_MESSAGES = {
 // Maps a server failure reason back onto the 3-step verification checklist so the UI can show
 // exactly which check failed, rather than a single opaque error message (Section 4.9.2 order:
 // QR, then geofence, then network — a step never runs after an earlier one has already failed).
+// Mirrors CHECK_STATE_BY_OUTCOME in server/src/services/attendance.service.js. The two must
+// agree: the student's screen and the teacher's audit trail describing the same attempt
+// differently is worse than either being absent.
 const STEP_OUTCOME_BY_REASON = {
-  SESSION_INACTIVE: { qr: 'failed', geofence: 'skipped', network: 'skipped' },
+  // The session, not the code, is what was wrong - the QR check never ran.
+  SESSION_INACTIVE: { qr: 'skipped', geofence: 'skipped', network: 'skipped' },
   QR_EXPIRED: { qr: 'failed', geofence: 'skipped', network: 'skipped' },
   QR_INVALID: { qr: 'failed', geofence: 'skipped', network: 'skipped' },
   GEOFENCE_MISSING_COORDINATES: { qr: 'passed', geofence: 'failed', network: 'skipped' },
@@ -147,6 +151,8 @@ export default function ScanAttendance() {
       return;
     }
 
+    // 'verifying', not 'passed'. Nothing has been checked yet: the payload has only been
+    // parsed locally, and whether the code is live is a question only the server can answer.
     setSteps({ qr: 'verifying', geofence: 'pending', network: 'pending' });
 
     let position;
@@ -155,11 +161,16 @@ export default function ScanAttendance() {
     } catch (err) {
       setStatus('error');
       setMessage('Location access is required to check in: ' + err.message);
-      setSteps({ qr: 'passed', geofence: 'failed', network: 'skipped' });
+      // The QR never reached the server, so it was not verified - 'skipped', not 'passed'.
+      setSteps({ qr: 'skipped', geofence: 'failed', network: 'skipped' });
       return;
     }
 
-    setSteps({ qr: 'passed', geofence: 'verifying', network: 'pending' });
+    // All three are evaluated server-side within the one request, so all three are in flight
+    // together. Showing QR as 'passed' here was the bug: an expired code displayed "Passed"
+    // from this point until the response landed, and stayed that way on any error the map
+    // below did not recognise.
+    setSteps({ qr: 'verifying', geofence: 'verifying', network: 'verifying' });
     setMessage('Submitting attendance…');
     try {
       const { data } = await api.post('/attendance/verify', {
@@ -174,11 +185,17 @@ export default function ScanAttendance() {
       setDetail(data);
       setSteps({ qr: 'passed', geofence: 'passed', network: 'passed' });
     } catch (err) {
-      const reason = err.response?.data?.error?.message;
+      const apiError = err.response?.data?.error;
+      // `code` is the machine-readable reason; `message` is only a fallback for older
+      // responses. Keying off the message alone meant anything not thrown by fail() - a
+      // validation error, a 401, a network drop with no response at all - matched nothing.
+      const reason = apiError?.code || apiError?.message;
       setStatus('error');
-      setMessage(FAILURE_MESSAGES[reason] || err.response?.data?.error?.message || 'Attendance verification failed.');
-      setDetail(err.response?.data?.error?.details || null);
-      setSteps(STEP_OUTCOME_BY_REASON[reason] || { qr: 'passed', geofence: 'passed', network: 'failed' });
+      setMessage(FAILURE_MESSAGES[reason] || apiError?.message || 'Attendance verification failed.');
+      setDetail(apiError?.details || null);
+      // An unrecognised failure means the outcome of each check is unknown, so nothing is
+      // claimed for any of them. The old fallback asserted two passes it had no evidence for.
+      setSteps(STEP_OUTCOME_BY_REASON[reason] || { qr: 'skipped', geofence: 'skipped', network: 'skipped' });
     }
   };
 

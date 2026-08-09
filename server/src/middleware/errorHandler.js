@@ -19,6 +19,10 @@ function errorHandler(err, req, res, next) {
   }
   res.status(status).json({
     error: {
+      // Machine-readable reason where the thrower set one (see fail() in attendance.service).
+      // Emitted separately from the message so a client can branch on the outcome without
+      // pattern-matching human-readable text, which silently stops matching when it is reworded.
+      code: err.reason,
       message: err.expose === false ? 'Internal server error' : err.message || 'Internal server error',
       details: err.details,
     },
