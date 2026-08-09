@@ -50,6 +50,22 @@ npm run db:status     # lists applied / pending migrations
 npm run db:check      # read-only integrity report (roles, orphans, retention, hash cost)
 ```
 
+### Testing the whole system
+
+```bash
+npm run test:system   # 163 checks against the running API (start `npm run dev` first)
+```
+
+Drives the live API over HTTP exactly as a browser does, covering authentication, role
+boundaries, all three verification factors, duplicate prevention, the audit trail, manual
+marking, reports, and the non-functional targets. It reads the database directly only to mint
+genuinely valid QR codes (it needs the session's `qr_secret`) and to assert side effects the
+API does not expose — such as the database rejecting a duplicate insert made behind the API's
+back.
+
+It records every table's row count on entry, tags everything it creates, and deletes all of it
+afterwards, then re-asserts those counts. Safe to run against a database with real data in it.
+
 A fresh `db:init` and a fully migrated database produce identical schemas.
 
 `npm run db:init` prints three ready-to-use accounts (all share one password):

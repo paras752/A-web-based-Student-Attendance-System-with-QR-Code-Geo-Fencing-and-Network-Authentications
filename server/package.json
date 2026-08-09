@@ -13,7 +13,8 @@
     "db:status": "node src/db/migrate.js status",
     "db:check": "node src/db/check.js",
     "db:backup": "node -e \"require('./src/services/backup.service').runBackup().then(r=>console.log('backup written:',r.file,Math.round(r.bytes/1024)+' KB')).catch(e=>{console.error(e.message);process.exit(1)})\"",
-    "admin:create": "node src/db/create-admin.js"
+    "admin:create": "node src/db/create-admin.js",
+    "test:system": "node tests/system-suite.cjs"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
