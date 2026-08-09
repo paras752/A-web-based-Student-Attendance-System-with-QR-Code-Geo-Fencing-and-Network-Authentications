@@ -1,0 +1,20 @@
+# Dependencies are installed inside the image; copying the host's would drag in binaries built
+# for the wrong platform (bcrypt is native).
+**/node_modules
+**/dist
+
+# Never let a local .env into an image - it holds the dev JWT secrets and DB credentials.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+
+.git
+.gitignore
+**/backups
+**/.tmp-playwright-check
+**/.setting
+**/.seeting
+docs
+*.md
+!README.md

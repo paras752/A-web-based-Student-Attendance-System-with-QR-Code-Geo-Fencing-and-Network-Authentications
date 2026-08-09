@@ -192,6 +192,28 @@ not used as an automated check, for the reason above.
 > from anywhere on the internet and satisfy the network factor outright. The SSID is now ignored
 > entirely; only the connection's source IP is used, which the client cannot choose.
 
+## Deploying to a real server
+
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for the full walkthrough (Railway + managed
+MySQL, with a portable `Dockerfile` that also runs on Fly.io, Render or a VPS).
+
+In production the API also serves the built SPA, so the whole system is one container on one
+HTTPS origin. Three things behave differently once it leaves localhost, and all three are
+covered in the guide:
+
+- **The network factor stops matching internal subnets.** Students reach an internet-hosted
+  server through the campus NAT, so it sees the college's *public egress* IP — a `192.168.x`
+  range can never match, and every check-in would fail `NETWORK_UNAUTHORISED`.
+- **HTTPS is mandatory.** The camera and geolocation both require a secure context; over plain
+  HTTP the student page cannot work at all.
+- **`TRUST_PROXY_HOPS` must be set explicitly.** It decides which address the network factor
+  and the rate limiter see. The app refuses to start in production until it is set, because
+  there is no safe default — too low breaks the factor, too high lets clients spoof it.
+
+Production bootstrap uses `npm run db:init -- --no-seed`, which creates the schema **without**
+the demo accounts — otherwise a public deployment would ship three working logins whose
+password is printed in this file, one of them an administrator.
+
 ## Known trade-offs (by design, not oversights)
 
 - **No native mobile app** — a responsive web app was chosen deliberately (Section 1.4.2 of the

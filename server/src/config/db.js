@@ -13,6 +13,8 @@ const pool = mysql.createPool({
   user: env.db.user,
   password: env.db.password,
   database: env.db.database,
+  // Managed MySQL providers require TLS; undefined for a local XAMPP server, which has none.
+  ...(env.db.ssl ? { ssl: env.db.ssl } : {}),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

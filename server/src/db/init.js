@@ -91,6 +91,19 @@ async function run() {
     database: env.db.database,
   });
 
+  // Bootstrapping a real deployment: create the schema, seed nothing. The demo accounts below
+  // share a password printed in the README, so seeding them into an internet-facing database
+  // would publish three working logins - one of them an administrator. Provision the first
+  // real admin with `npm run admin:create` instead.
+  if (process.argv.includes('--no-seed')) {
+    await markAllApplied(db);
+    console.log('\nSchema created, no demo accounts seeded (--no-seed).');
+    console.log('Create the first administrator with:');
+    console.log('  npm run admin:create -- --email you@college.edu --name "Your Name"');
+    await db.end();
+    return;
+  }
+
   // The same cost the application uses. Seeding at a lower cost made the demo accounts
   // measurably weaker than every account created through the app.
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, env.bcryptRounds);
