@@ -1,4 +1,4 @@
-# SSAS — Smart Student Attendance System
+# SSAS-Smart Student Attendance System
 
 Capstone 2 implementation of the design documented in the Capstone 1 proposal and individual
 report: a web-based attendance system where a check-in only counts once **three independent
