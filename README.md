@@ -2,7 +2,7 @@
 
 Capstone 2 implementation of the design documented in the Capstone 1 proposal and individual
 report: a web-based attendance system where a check-in only counts once **three independent
-signals agree** — a dynamic, time-limited QR code, GPS geofencing, and institutional network
+signals agree**  a dynamic, time-limited QR code, GPS geofencing, and institutional network
 verification.
 
 ## Stack
@@ -18,7 +18,7 @@ verification.
 - A MySQL-compatible server on `127.0.0.1:3306` with a `root` user and **no password** (XAMPP's
   default). If you use XAMPP, start MySQL from the XAMPP control panel.
   - ⚠️ **Port conflict note**: if you also have the `MySQL80` Windows service installed, it binds
-    the same port 3306 and will make XAMPP's MySQL fail to start (or vice versa — whichever one
+    the same port 3306 and will make XAMPP's MySQL fail to start (or vice versa  whichever one
     grabbed the port first "wins" and the other's client will get `Access denied`/`ECONNREFUSED`
     depending on which is actually listening). Only run one of them at a time:
     `services.msc` → `MySQL80` → Stop, then start XAMPP's MySQL module.
@@ -39,7 +39,7 @@ npm install
 
 ### Changing the schema later
 
-`db:init` is a **factory reset** — `schema.sql` drops every table. It now refuses to run
+`db:init` is a **factory reset** `schema.sql` drops every table. It now refuses to run
 against a database that already contains data, and tells you what it would have destroyed.
 To change the schema of a database that is in use, add a file under
 `server/src/db/migrations/` and run:
@@ -60,7 +60,7 @@ Drives the live API over HTTP exactly as a browser does, covering authentication
 boundaries, all three verification factors, duplicate prevention, the audit trail, manual
 marking, reports, and the non-functional targets. It reads the database directly only to mint
 genuinely valid QR codes (it needs the session's `qr_secret`) and to assert side effects the
-API does not expose — such as the database rejecting a duplicate insert made behind the API's
+API does not expose  such as the database rejecting a duplicate insert made behind the API's
 back.
 
 It records every table's row count on entry, tags everything it creates, and deletes all of it
@@ -88,7 +88,7 @@ An administrator can **never** be self-registered. Every route that creates or p
 requires an existing admin, verified five ways: public register, student, teacher,
 unauthenticated, and role-promotion are all refused.
 
-That leaves the bootstrap — the first admin cannot come from inside the application. Use:
+That leaves the bootstrap  the first admin cannot come from inside the application. Use:
 
 ```bash
 npm run admin:create -- --email you@college.edu --name "Your Name"
