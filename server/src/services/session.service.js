@@ -4,6 +4,19 @@ const env = require('../config/env');
 const { ApiError } = require('../middleware/errorHandler');
 const courseService = require('./course.service');
 
+// The client sends ISO 8601 ("2026-08-18T14:51:12.373Z"). MariaDB parses that leniently, so it
+// worked throughout development on XAMPP, but MySQL in strict mode rejects it outright:
+// ER_TRUNCATED_WRONG_VALUE, "Incorrect datetime value ... for column 'start_time'". Handing
+// mysql2 a Date instead lets it serialise the value itself, in UTC, per the pool's
+// timezone: 'Z' - correct on both engines rather than only on the one used locally.
+function toDateTime(value, field) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ApiError(400, `${field} is not a valid date`);
+  }
+  return date;
+}
+
 async function createSession({
   courseId,
   teacherId,
@@ -36,8 +49,8 @@ async function createSession({
       geofenceRadiusM || env.defaultGeofenceRadiusM,
       authorisedSsid || null,
       authorisedSubnet || 'any',
-      startTime,
-      endTime,
+      toDateTime(startTime, 'startTime'),
+      toDateTime(endTime, 'endTime'),
     ]
   );
 
