@@ -95,12 +95,26 @@ restrictions browsers increasingly apply.
 The internal host (`mysql.railway.internal`) only resolves from inside Railway. For the
 bootstrap step below you need the **public** host and port from the Connect tab.
 
-## 2. Bootstrap the schema — once
+## 2. Bootstrap the schema — automatic
 
-Railway's MySQL starts empty. Migrations are forward-only ALTERs and assume the tables already
-exist, so a brand-new database needs the schema created first.
+**You can skip this step.** Railway's MySQL starts empty, and the migrations are forward-only
+ALTERs that assume the tables already exist, so the app detects an empty database on startup and
+creates the schema itself before migrating. It seeds no accounts.
 
-Run this **from your machine**, pointed at the Railway database:
+You will see this once in the deploy logs:
+
+```
+[bootstrap] 'railway' is empty - creating schema (no demo accounts)
+[bootstrap] schema created. Create the first administrator with:
+[bootstrap]   npm run admin:create -- --email you@college.edu --name "Your Name"
+```
+
+It only ever fires when the database contains **zero** tables, so it cannot destroy anything —
+the danger in `db:init` is that it DROPs, and a database with no tables has nothing to drop. On
+every later deploy it is a no-op.
+
+If you would rather do it explicitly, run this **from your machine** against the Railway database
+before the first deploy:
 
 ```bash
 cd server
@@ -270,6 +284,8 @@ SUITE_API=https://<your-app>.up.railway.app/api/v1 npm run test:system
 | Symptom | Cause |
 |---|---|
 | Deploy crashes: *"Refusing to start in production with an unsafe configuration"* | Read the list it prints — a missing/weak/duplicate JWT secret, or `TRUST_PROXY_HOPS` unset. It is doing its job. |
+| *"[startup] FAILED: database unreachable after 60s"* | Wrong `DB_HOST`/credentials, or `DB_SSL` not `true`. Startup waits up to 60s (`DB_WAIT_TIMEOUT_MS`) for a database that is merely slow to come up. |
+| Teacher gets a 500 creating a session | Only on a build predating the MySQL strict-mode datetime fix. MariaDB accepts ISO 8601 in a DATETIME column; MySQL rejects it. |
 | Every check-in fails `NETWORK_UNAUTHORISED` | `authorised_subnet` is an internal range. Use the public egress IP (step 7). |
 | `/auth/status` shows a `10.x` address as `clientIp` | `TRUST_PROXY_HOPS` is 0. Set it to 1. |
 | Camera never starts on the phone | Page is not on `https://`, or permission was denied. |
